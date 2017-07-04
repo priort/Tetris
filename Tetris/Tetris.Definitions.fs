@@ -21,6 +21,7 @@ type RowBottomPosition = float
 
 type GameboardInMotion = {
     Height : float
+    Width : float
     BlockSize : float
     MovingBlock : Block
     Rows : Map<RowBottomPosition, RowData>
@@ -28,6 +29,7 @@ type GameboardInMotion = {
 
 type RestingGameboard = {
     Height : float
+    Width : float
     BlockSize : float
     PlacedBlock : Block
     Rows : Map<RowBottomPosition, RowData>

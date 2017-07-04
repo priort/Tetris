@@ -26,14 +26,35 @@ let transitionGameBoard (gameboard: Gameboard) =
                rows 
                |> Map.add rowFromY (rowFrom |> Map.remove block.BottomX)
                |> Map.add rowToY (rowTo |> Map.add block.BottomX block)
-          
+     
+     let moveBlockHorizontally block columnTo (gameboard:GameboardInMotion) = 
+     
+          if columnTo < 0. || columnTo > (gameboard.Width - gameboard.BlockSize) then 
+               gameboard
+          else
+               gameboard.Rows 
+               |> Map.tryFind block.BottomY
+               |> Option.map (fun row -> row |> Map.remove block.BottomX |> Map.add columnTo block)
+               |> Option.map (fun row -> gameboard.Rows |> Map.remove block.BottomY |> Map.add block.BottomY row)
+               |> (fun updatedRowsOpt -> 
+                    match updatedRowsOpt with 
+                    | Some updatedRows -> 
+                         {
+                              gameboard with 
+                                   Rows = updatedRows
+                                   MovingBlock = { gameboard.MovingBlock with BottomX = columnTo } 
+                         }
+                    | None -> gameboard)
+               
      match gameboard with 
      | GameboardInMotion gameboard -> 
      
           let anotherBlockIsInTheWay =
                gameboard.Rows |> Map.exists (fun rowBottomY row ->
                     rowBottomY = gameboard.MovingBlock.BottomY + gameboard.BlockSize
-                    && row |> Map.containsKey gameboard.MovingBlock.BottomX)
+                    && row |> Map.exists(fun blockX _ -> 
+                         blockX > (gameboard.MovingBlock.BottomX - gameboard.BlockSize)
+                         && blockX < (gameboard.MovingBlock.BottomX + gameboard.BlockSize) ))
                
           let nextYPosition =
                if (gameboard.MovingBlock.BottomY + 5.) >= gameboard.Height then gameboard.Height
@@ -41,8 +62,8 @@ let transitionGameBoard (gameboard: Gameboard) =
                
           let gameBoardTransitionedHorizontally = 
                match getKeyPressed() with 
-               | Some(ValidKeyPress(Left, _)) -> { gameboard with MovingBlock = { gameboard.MovingBlock with BottomX = gameboard.MovingBlock.BottomX - 5. } }
-               | Some(ValidKeyPress(Right, _)) -> { gameboard with MovingBlock = { gameboard.MovingBlock with BottomX = gameboard.MovingBlock.BottomX + 5. } }
+               | Some(ValidKeyPress(Left, _)) ->  gameboard |> moveBlockHorizontally gameboard.MovingBlock (gameboard.MovingBlock.BottomX - 5.)
+               | Some(ValidKeyPress(Right, _)) -> gameboard |> moveBlockHorizontally gameboard.MovingBlock (gameboard.MovingBlock.BottomX + 5.)
                | _ -> gameboard
                
           let nextRow = Map.tryFind nextYPosition gameBoardTransitionedHorizontally.Rows
@@ -50,6 +71,7 @@ let transitionGameBoard (gameboard: Gameboard) =
           | _, true-> 
                RestingGameboard {
                     Height = gameBoardTransitionedHorizontally.Height
+                    Width = gameBoardTransitionedHorizontally.Width
                     BlockSize = gameBoardTransitionedHorizontally.BlockSize
                     PlacedBlock = gameBoardTransitionedHorizontally.MovingBlock
                     Rows = gameBoardTransitionedHorizontally.Rows
@@ -58,6 +80,7 @@ let transitionGameBoard (gameboard: Gameboard) =
                let blockWithUpdatedPosition = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                RestingGameboard {
                     Height = gameBoardTransitionedHorizontally.Height
+                    Width = gameBoardTransitionedHorizontally.Width
                     BlockSize = gameBoardTransitionedHorizontally.BlockSize
                     PlacedBlock = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                     Rows = gameBoardTransitionedHorizontally.Rows |> moveBlockFromRowToRow gameBoardTransitionedHorizontally.MovingBlock.BottomY nextYPosition blockWithUpdatedPosition
@@ -66,6 +89,7 @@ let transitionGameBoard (gameboard: Gameboard) =
                let blockWithUpdatedPosition = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                GameboardInMotion {
                     Height = gameBoardTransitionedHorizontally.Height
+                    Width = gameBoardTransitionedHorizontally.Width
                     BlockSize = gameBoardTransitionedHorizontally.BlockSize
                     MovingBlock = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                     Rows = gameBoardTransitionedHorizontally.Rows |> moveBlockFromRowToRow gameBoardTransitionedHorizontally.MovingBlock.BottomY nextYPosition blockWithUpdatedPosition
@@ -74,6 +98,7 @@ let transitionGameBoard (gameboard: Gameboard) =
                let blockWithUpdatedPosition = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                RestingGameboard {
                     Height = gameBoardTransitionedHorizontally.Height
+                    Width = gameBoardTransitionedHorizontally.Width
                     BlockSize = gameBoardTransitionedHorizontally.BlockSize
                     PlacedBlock = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                     Rows = gameBoardTransitionedHorizontally.Rows |> Map.add nextYPosition Map.empty |> moveBlockFromRowToRow gameBoardTransitionedHorizontally.MovingBlock.BottomY nextYPosition blockWithUpdatedPosition
@@ -82,6 +107,7 @@ let transitionGameBoard (gameboard: Gameboard) =
                let blockWithUpdatedPosition = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                GameboardInMotion {
                     Height = gameBoardTransitionedHorizontally.Height
+                    Width = gameBoardTransitionedHorizontally.Width
                     BlockSize = gameBoardTransitionedHorizontally.BlockSize
                     MovingBlock = { gameBoardTransitionedHorizontally.MovingBlock with BottomY = nextYPosition }
                     Rows = gameBoardTransitionedHorizontally.Rows |> Map.add nextYPosition Map.empty |> moveBlockFromRowToRow gameBoardTransitionedHorizontally.MovingBlock.BottomY nextYPosition blockWithUpdatedPosition
@@ -90,6 +116,7 @@ let transitionGameBoard (gameboard: Gameboard) =
      | RestingGameboard gameboard ->
           GameboardInMotion {
                Height = gameboard.Height
+               Width = gameboard.Width
                BlockSize = gameboard.BlockSize
                MovingBlock = { BottomX = 20.; BottomY = 0.; Color = (nextColor gameboard.PlacedBlock.Color) }
                Rows = gameboard.Rows

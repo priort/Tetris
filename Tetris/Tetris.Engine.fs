@@ -10,19 +10,20 @@ Node.require.Invoke("core-js") |> ignore
 module TransitionReferee = 
     let blocksOverlapHorizontally block1XPos block2XPos blockSize =
         block1XPos > block2XPos - blockSize && block1XPos < block2XPos + blockSize
-        
-    let rowCanAccomodateBlockMovingHorizontally previousRowBottomYPos blockXPrevPos blockXPos blockSize (rows:Map<RowBottomPosition, RowData>) rowBottomYPos = 
-        ((rows
+    
+    //parameters when this worked last previousRowBottomYPos blockXPrevPos blockXPos blockSize (rows:Map<RowBottomPosition, RowData>) rowBottomYPos
+    let rowCanAccomodateBlockMovingHorizontally blockNextXPos blockNextYPos (gameboard:GameboardInMotion) = 
+        ((gameboard.Rows
         |> Map.exists (fun rowY row ->
-            rowY > rowBottomYPos - blockSize && rowY <= rowBottomYPos + blockSize && rowY <> previousRowBottomYPos &&
+            rowY > blockNextYPos - gameboard.BlockSize && rowY <= blockNextYPos + gameboard.BlockSize && rowY <> gameboard.MovingBlock.BottomY &&
             row |> 
             Map.exists (fun existingX  _ -> 
-                    blocksOverlapHorizontally existingX blockXPos blockSize
+                    blocksOverlapHorizontally existingX blockNextXPos gameboard.BlockSize
                  )
-            )) ||   (rows 
-                   |> Map.tryFind previousRowBottomYPos 
+            )) ||   (gameboard.Rows 
+                   |> Map.tryFind gameboard.MovingBlock.BottomY 
                    |> function
-                      | Some r -> r |> Map.remove blockXPrevPos |> Map.exists (fun existingX  _ -> blocksOverlapHorizontally existingX blockXPos blockSize)
+                      | Some r -> r |> Map.remove gameboard.MovingBlock.BottomX |> Map.exists (fun existingX  _ -> blocksOverlapHorizontally existingX blockNextXPos gameboard.BlockSize)
                       | None -> false))
         |> not
 
@@ -85,7 +86,7 @@ let transitionGameBoard (gameboard: Gameboard) =
             else gameboard.MovingBlock.BottomY + 5.
                                      
         let horizontalMoveIsPossible currentXPosition currentYPosition nextXPosition nextYPosition = 
-            TransitionReferee.rowCanAccomodateBlockMovingHorizontally currentYPosition currentXPosition nextXPosition gameboard.BlockSize gameboard.Rows nextYPosition
+            TransitionReferee.rowCanAccomodateBlockMovingHorizontally nextXPosition nextYPosition gameboard
         
         let gameBoardTransitionedHorizontally = 
             match getKeyPressed() with

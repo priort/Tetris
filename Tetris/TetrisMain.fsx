@@ -13,5 +13,3 @@ Node.require.Invoke("core-js") |> ignore
 open Tetris.Engine
 
 runApp()
-
-//file:///C:/d/Tetris/Tetris/public/index.html

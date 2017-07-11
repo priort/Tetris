@@ -8,17 +8,12 @@ open Tetris.UserGameController
 
 Node.require.Invoke("core-js") |> ignore
 
-let nextColor color = 
-    let colors = ["blue"; "red"; "grey"; "green"; "purple"]
-    match colors |> List.tryFindIndex (fun c -> c = color) with
-    | Some i -> colors.[(i + 1) % colors.Length]
-    | None -> colors.[0]
 
 module TransitionReferee = 
     let blocksOverlapHorizontally block1XPos block2XPos blockSize =
         block1XPos > block2XPos - blockSize && block1XPos < block2XPos + blockSize
     
-    let rowCanAccomodateBlockMovingHorizontally blockNextXPos blockNextYPos (gameboard:GameboardInMotion) = 
+    let allowMove blockNextXPos blockNextYPos (gameboard:GameboardInMotion) = 
         ((gameboard.Rows
           |> Map.exists (fun rowY row ->
             rowY > blockNextYPos - gameboard.BlockSize && rowY <= blockNextYPos + gameboard.BlockSize && rowY <> gameboard.MovingBlock.BottomY &&
@@ -34,9 +29,14 @@ module TransitionReferee =
                | None -> false))
         |> not
 
+module Block = 
+    let nextColor color = 
+        let colors = ["blue"; "red"; "grey"; "green"; "purple"]
+        match colors |> List.tryFindIndex (fun c -> c = color) with
+        | Some i -> colors.[(i + 1) % colors.Length]
+        | None -> colors.[0]
+
 module Gameboard = 
-    let private horizontalMoveIsPossible currentXPosition currentYPosition nextXPosition nextYPosition gameboard = 
-        TransitionReferee.rowCanAccomodateBlockMovingHorizontally nextXPosition nextYPosition gameboard
         
     let private moveBlockHorizontally block columnTo (gameboard : GameboardInMotion) = 
         if columnTo < 0. || columnTo > (gameboard.Width - gameboard.BlockSize) then gameboard
@@ -54,7 +54,7 @@ module Gameboard =
                 | None -> gameboard
 
         
-    let moveBlockFromRowToRow rowFromY rowToY block (rows:Map<RowBottomPosition, RowData>) =
+    let private moveBlockFromRowToRow rowFromY rowToY block (rows:Map<RowBottomPosition, RowData>) =
           
         match Map.tryFind rowFromY rows, Map.tryFind rowToY rows with
         | Some rowFrom, Some rowTo ->
@@ -63,20 +63,122 @@ module Gameboard =
             |> Map.add rowToY (rowTo |> Map.add block.BottomX block)
         | _, _ -> rows
         
-    let transitionHorizontally (getKeyPressed:unit -> ValidKeyPress option) nextRowYPos gameboard =
+    let transitionHorizontally nextXPos nextRowYPos gameboard =
         match gameboard with
-        | GameboardInMotion gameboard ->
-            match getKeyPressed() with
-            | Some(ValidKeyPress(Left, _)) when horizontalMoveIsPossible gameboard.MovingBlock.BottomX gameboard.MovingBlock.BottomY (gameboard.MovingBlock.BottomX - 5.) nextRowYPos gameboard -> 
-                GameboardInMotion (gameboard |> moveBlockHorizontally gameboard.MovingBlock (gameboard.MovingBlock.BottomX - 5.))
-            | Some(ValidKeyPress(Right, _)) when horizontalMoveIsPossible gameboard.MovingBlock.BottomX gameboard.MovingBlock.BottomY (gameboard.MovingBlock.BottomX + 5.) nextRowYPos gameboard -> 
-                GameboardInMotion (gameboard |> moveBlockHorizontally gameboard.MovingBlock (gameboard.MovingBlock.BottomX + 5.))
-            | _ -> GameboardInMotion gameboard
+        | GameboardInMotion gameboard when TransitionReferee.allowMove nextXPos nextRowYPos gameboard ->
+            GameboardInMotion (gameboard |> moveBlockHorizontally gameboard.MovingBlock nextXPos)
+        | GameboardInMotion gameboard -> GameboardInMotion gameboard
         | RestingGameboard gameboard -> RestingGameboard gameboard
-        
+    
+    let transitionVertically nextYPosition gameboard = 
+    
+        match gameboard with
+        | GameboardInMotion gameboard -> 
+            let anotherBlockIsInTheWayBelow = 
+                gameboard.Rows 
+                |> Map.exists (fun rowBottomY row -> 
+                       rowBottomY = gameboard.MovingBlock.BottomY + gameboard.BlockSize && 
+                       row 
+                       |> Map.exists (fun blockX _ -> 
+                            TransitionReferee.blocksOverlapHorizontally blockX gameboard.MovingBlock.BottomX gameboard.BlockSize))
+            
+            
+            
+            let nextRow = Map.tryFind nextYPosition gameboard.Rows
+            match (nextRow, anotherBlockIsInTheWayBelow) with
+            | _, true -> 
+                RestingGameboard 
+                    { Height = gameboard.Height
+                      Width = gameboard.Width
+                      BlockSize = gameboard.BlockSize
+                      PlacedBlock = gameboard.MovingBlock
+                      Rows = gameboard.Rows }
+                                   
+            | Some row, _ when nextYPosition = gameboard.Height -> 
+                let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
+                RestingGameboard 
+                    { Height = gameboard.Height
+                      Width = gameboard.Width
+                      BlockSize = gameboard.BlockSize
+                      PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
+                      Rows = 
+                          gameboard.Rows 
+                          |> moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
+                                 blockWithUpdatedPosition }
+            | Some row, _ -> 
+                let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
+                GameboardInMotion 
+                    { 
+                      gameboard with                  
+                          MovingBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
+                          Rows = 
+                              gameboard.Rows 
+                              |> moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
+                                     blockWithUpdatedPosition }
+                                     
+            | None, _ when nextYPosition = gameboard.Height -> 
+                let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
+                RestingGameboard 
+                    { Height = gameboard.Height
+                      Width = gameboard.Width
+                      BlockSize = gameboard.BlockSize
+                      PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
+                      Rows = 
+                          gameboard.Rows
+                          |> Map.add nextYPosition Map.empty
+                          |> moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
+                                 blockWithUpdatedPosition }
+            | None, _ -> 
+                let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
+                GameboardInMotion 
+                    { gameboard with  
+                        MovingBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
+                        Rows = 
+                            gameboard.Rows
+                            |> Map.add nextYPosition Map.empty
+                            |> moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
+                                   blockWithUpdatedPosition }
+        | RestingGameboard gameboard -> 
+            let rowsWithCompletedOnesClearedAndOthersShifted (gameboard : RestingGameboard) = 
+                let rowIsCompleted (row : RowData) = (row |> Map.toSeq |> Seq.length |> float) * gameboard.BlockSize = gameboard.Width
+                gameboard.Rows
+                |> Map.toSeq
+                |> Seq.choose (fun (bottomY, row) -> if rowIsCompleted row then Some bottomY else None)
+                |> fun rowsToClear -> 
+                    let distanceBeingCleared = (rowsToClear |> Seq.length |> float) * gameboard.BlockSize
+                    (rowsToClear, (rowsToClear |> Seq.length |> float) * gameboard.BlockSize)
+                |> (fun (rowsToClear, distanceToShiftOtherRows) -> 
+                
+                    rowsToClear
+                    |> Seq.fold (fun rows rowToClear -> rows |> Map.remove rowToClear) gameboard.Rows
+                    |> fun rows -> 
+                        if distanceToShiftOtherRows > 0. then 
+                            rows
+                            |> Map.toSeq
+                            |> Seq.map fst
+                            |> Seq.sortDescending
+                            |> Seq.fold (fun rows key ->
+                                   let bottomYOfLowestClearedRow = rowsToClear |> Seq.min
+                                   if key < bottomYOfLowestClearedRow then 
+                                       let row = rows |> Map.tryFind key |> fun opt -> match opt with | Some row -> row | None -> Map.empty
+                                       rows
+                                       |> Map.remove key
+                                       |> Map.add 
+                                            (key + distanceToShiftOtherRows) 
+                                            (row |> Map.map (fun blockX block -> { block with BottomY = block.BottomY + distanceToShiftOtherRows }))
+                                   else rows) rows
+                        else rows)
+                        
+            GameboardInMotion 
+                { Height = gameboard.Height
+                  Width = gameboard.Width
+                  BlockSize = gameboard.BlockSize
+                  MovingBlock = { BottomX = 20.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedBlock.Color) }
+                  Rows = rowsWithCompletedOnesClearedAndOthersShifted gameboard }
+    
 let transitionGameBoard (gameboard: Gameboard) =
 
-    let nextYPosition =
+    let nextYPos =
         match gameboard with
         | GameboardInMotion gameboard ->
             if (gameboard.MovingBlock.BottomY + 5.) >= gameboard.Height then 
@@ -84,113 +186,24 @@ let transitionGameBoard (gameboard: Gameboard) =
             else 
                 gameboard.MovingBlock.BottomY + 5.
         | RestingGameboard gameboard -> gameboard.PlacedBlock.BottomY
+
+    
+    let nextXPos = 
+        match gameboard with 
+        | GameboardInMotion gameboard ->
+            match getKeyPressed() with
+            | Some (ValidKeyPress(Left, _)) when (gameboard.MovingBlock.BottomX - 5.) < 0. -> 0.
+            | Some (ValidKeyPress(Left, _)) -> gameboard.MovingBlock.BottomX - 5.
+            | Some (ValidKeyPress(Right, _)) when (gameboard.MovingBlock.BottomX + 5.) > gameboard.Width -> gameboard.Width
+            | Some (ValidKeyPress(Right, _)) -> gameboard.MovingBlock.BottomX + 5.
+            | _ -> gameboard.MovingBlock.BottomX
+
+        | RestingGameboard gameboard -> gameboard.PlacedBlock.BottomX               
             
-        
-    let gameboard = Gameboard.transitionHorizontally getKeyPressed nextYPosition gameboard
+    gameboard 
+    |> Gameboard.transitionHorizontally nextXPos nextYPos
+    |> Gameboard.transitionVertically nextYPos
                
-    match gameboard with
-    | GameboardInMotion gameboard -> 
-        let anotherBlockIsInTheWayBelow = 
-            gameboard.Rows 
-            |> Map.exists (fun rowBottomY row -> 
-                   rowBottomY = gameboard.MovingBlock.BottomY + gameboard.BlockSize && 
-                   row 
-                   |> Map.exists (fun blockX _ -> 
-                        TransitionReferee.blocksOverlapHorizontally blockX gameboard.MovingBlock.BottomX gameboard.BlockSize))
-        
-        
-        
-        let nextRow = Map.tryFind nextYPosition gameboard.Rows
-        match (nextRow, anotherBlockIsInTheWayBelow) with
-        | _, true -> 
-            RestingGameboard 
-                { Height = gameboard.Height
-                  Width = gameboard.Width
-                  BlockSize = gameboard.BlockSize
-                  PlacedBlock = gameboard.MovingBlock
-                  Rows = gameboard.Rows }
-                               
-        | Some row, _ when nextYPosition = gameboard.Height -> 
-            let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
-            RestingGameboard 
-                { Height = gameboard.Height
-                  Width = gameboard.Width
-                  BlockSize = gameboard.BlockSize
-                  PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
-                  Rows = 
-                      gameboard.Rows 
-                      |> Gameboard.moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
-                             blockWithUpdatedPosition }
-        | Some row, _ -> 
-            let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
-            GameboardInMotion 
-                { 
-                  gameboard with                  
-                      MovingBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
-                      Rows = 
-                          gameboard.Rows 
-                          |> Gameboard.moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
-                                 blockWithUpdatedPosition }
-                                 
-        | None, _ when nextYPosition = gameboard.Height -> 
-            let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
-            RestingGameboard 
-                { Height = gameboard.Height
-                  Width = gameboard.Width
-                  BlockSize = gameboard.BlockSize
-                  PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
-                  Rows = 
-                      gameboard.Rows
-                      |> Map.add nextYPosition Map.empty
-                      |> Gameboard.moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
-                             blockWithUpdatedPosition }
-        | None, _ -> 
-            let blockWithUpdatedPosition = { gameboard.MovingBlock with BottomY = nextYPosition }
-            GameboardInMotion 
-                { gameboard with  
-                    MovingBlock = { gameboard.MovingBlock with BottomY = nextYPosition }
-                    Rows = 
-                        gameboard.Rows
-                        |> Map.add nextYPosition Map.empty
-                        |> Gameboard.moveBlockFromRowToRow gameboard.MovingBlock.BottomY nextYPosition 
-                               blockWithUpdatedPosition }
-    | RestingGameboard gameboard -> 
-        let rowsWithCompletedOnesClearedAndOthersShifted (gameboard : RestingGameboard) = 
-            let rowIsCompleted (row : RowData) = (row |> Map.toSeq |> Seq.length |> float) * gameboard.BlockSize = gameboard.Width
-            gameboard.Rows
-            |> Map.toSeq
-            |> Seq.choose (fun (bottomY, row) -> if rowIsCompleted row then Some bottomY else None)
-            |> fun rowsToClear -> 
-                let distanceBeingCleared = (rowsToClear |> Seq.length |> float) * gameboard.BlockSize
-                (rowsToClear, (rowsToClear |> Seq.length |> float) * gameboard.BlockSize)
-            |> (fun (rowsToClear, distanceToShiftOtherRows) -> 
-            
-                rowsToClear
-                |> Seq.fold (fun rows rowToClear -> rows |> Map.remove rowToClear) gameboard.Rows
-                |> fun rows -> 
-                    if distanceToShiftOtherRows > 0. then 
-                        rows
-                        |> Map.toSeq
-                        |> Seq.map fst
-                        |> Seq.sortDescending
-                        |> Seq.fold (fun rows key ->
-                               let bottomYOfLowestClearedRow = rowsToClear |> Seq.min
-                               if key < bottomYOfLowestClearedRow then 
-                                   let row = rows |> Map.tryFind key |> fun opt -> match opt with | Some row -> row | None -> Map.empty
-                                   rows
-                                   |> Map.remove key
-                                   |> Map.add 
-                                        (key + distanceToShiftOtherRows) 
-                                        (row |> Map.map (fun blockX block -> { block with BottomY = block.BottomY + distanceToShiftOtherRows }))
-                               else rows) rows
-                    else rows)
-                    
-        GameboardInMotion 
-            { Height = gameboard.Height
-              Width = gameboard.Width
-              BlockSize = gameboard.BlockSize
-              MovingBlock = { BottomX = 20.; BottomY = 0.; Color = (nextColor gameboard.PlacedBlock.Color) }
-              Rows = rowsWithCompletedOnesClearedAndOthersShifted gameboard }
                     
 let runApp() = 
  

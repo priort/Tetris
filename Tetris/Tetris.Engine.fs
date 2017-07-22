@@ -23,7 +23,9 @@ module TransitionReferee =
     type RefereeDecision = 
         | MoveHorizontallyAndVertically of GameboardInMotion
         | MoveVerticallyOnly of GameboardInMotion
-        | RestOnBlockBelow of GameboardInMotion
+        | MoveVerticallyOnlyAndRestOnBottom of GameboardInMotion
+        | MoveVerticallyOnlyAndRestOnBlockBelow of GameboardInMotion
+        | MoveAndRestOnBlockBelow of GameboardInMotion
         | MoveAndRestOnBottom of GameboardInMotion
         | CheckForCompletedRowsAndReleaseAnotherBlock of RestingGameboard
         
@@ -36,63 +38,75 @@ module TransitionReferee =
         |> List.exists (fun tetrominoBlock ->
             row |> Map.exists (fun existingX  _ -> blocksOverlapHorizontally existingX (tetrominoBlock |> nextXPosition horizontalTransitionDirection) blockSize)
         )
-    
-    let decideTransitionForSingleBlock blockNextXPos blockNextYPos (gameboard:Gameboard) = 
-        match gameboard with
-        | GameboardInMotion gameboard ->    
-            let otherRowsInRangeContainingBlocksInTheWay = 
-                gameboard.Rows
-                |> Map.toSeq
-                |> Seq.choose (fun (rowY, row) -> 
-                    if
-                        rowY > blockNextYPos - gameboard.BlockSize && rowY <= blockNextYPos + gameboard.BlockSize && rowY <> gameboard.MovingBlock.BottomY &&
-                        row |> Map.exists (fun existingX  _ -> blocksOverlapHorizontally existingX blockNextXPos gameboard.BlockSize)
-                    then
-                        Some rowY
-                    elif rowY = gameboard.MovingBlock.BottomY &&
-                         row |> Map.remove gameboard.MovingBlock.BottomX |> Map.exists (fun existingX  _ -> blocksOverlapHorizontally existingX blockNextXPos gameboard.BlockSize)
-                    then Some rowY
-                    else None)
-                
-                    
-            if blockNextYPos = gameboard.Height then MoveAndRestOnBottom gameboard
-            elif (otherRowsInRangeContainingBlocksInTheWay |> Seq.length > 0 && 
-                  otherRowsInRangeContainingBlocksInTheWay |> Seq.contains (gameboard.MovingBlock.BottomY + gameboard.BlockSize)) then 
-                
-                RestOnBlockBelow gameboard
-            elif otherRowsInRangeContainingBlocksInTheWay |> Seq.length > 0 then
-                MoveVerticallyOnly gameboard
-            else MoveHorizontallyAndVertically gameboard
-        | RestingGameboard gameboard -> CheckForCompletedRowsAndReleaseAnotherBlock gameboard
 
-    let decideTransition (horizontalTransitionDirection:HorizontalTransitionDirection) (gameboard:Gameboard) = 
+    let decideTransition (direction:HorizontalTransitionDirection) (gameboard:Gameboard) = 
         match gameboard with
         | GameboardInMotion gameboard ->
-            let otherRowsInRangeContainingBlocksInTheWay = 
+            let otherRowsInRangeContainingBlocksInTheWay direction  = 
                 gameboard.Rows
                 |> Map.toSeq
                 |> Seq.choose (fun (rowY, row) -> 
-                    if
-                        rowY > ((gameboard.MovingTetromino.TopY gameboard.BlockSize) + transitionDistance) && rowY <= (gameboard.MovingTetromino.BottomY) + (gameboard.MovingTetromino.Height gameboard.BlockSize) && rowY <> gameboard.MovingTetromino.BottomY &&
-                        tetrominoOverlapsWithExistingBlocks horizontalTransitionDirection gameboard.BlockSize gameboard.MovingTetromino row
+                    if  
+                        rowY > ((gameboard.MovingTetromino.TopY gameboard.BlockSize) + transitionDistance) && rowY < (gameboard.MovingTetromino.BottomY + transitionDistance) + (gameboard.MovingTetromino.Height gameboard.BlockSize) && rowY <> gameboard.MovingTetromino.BottomY &&
+                        tetrominoOverlapsWithExistingBlocks direction gameboard.BlockSize gameboard.MovingTetromino row
                     then
                         Some rowY
                     elif rowY = gameboard.MovingTetromino.BottomY &&
                         gameboard.MovingTetromino.LowestBlocks gameboard.BlockSize
                         |> List.fold (fun row b -> row |> Map.remove b.BottomX) row 
-                        |> tetrominoOverlapsWithExistingBlocks horizontalTransitionDirection gameboard.BlockSize gameboard.MovingTetromino
+                        |> tetrominoOverlapsWithExistingBlocks direction gameboard.BlockSize gameboard.MovingTetromino
                     then Some rowY
                     else None)
+            
+                
+            if (otherRowsInRangeContainingBlocksInTheWay direction |> Seq.length > 0) then
+                //can't go horizontal and vertical, check vertical with no horizontal
+                if (otherRowsInRangeContainingBlocksInTheWay NoHorizontalTransition |> Seq.length > 0 |> not) then
+                    //can move vertically
+                    //check if reaching the bottom
+                    if (gameboard.MovingTetromino.BottomY + transitionDistance) = gameboard.Height then 
+                        MoveVerticallyOnlyAndRestOnBottom gameboard
+                    //check if  moving to rest on blocks below
+                    elif 
+                        (gameboard.Rows 
+                        |> Map.tryFind (gameboard.MovingTetromino.BottomY + transitionDistance + gameboard.BlockSize) 
+                        |> Option.map (fun row -> tetrominoOverlapsWithExistingBlocks NoHorizontalTransition gameboard.BlockSize gameboard.MovingTetromino row) 
+                        |> function | Some b -> b | None -> false)  then
+                            MoveVerticallyOnlyAndRestOnBlockBelow gameboard
+                    else MoveVerticallyOnly gameboard
+                else
+                    //Todo This state should never happen so need to make it unrepresentable
+                    { Height = gameboard.Height
+                      Width = gameboard.Width
+                      PlacedBlock = gameboard.MovingBlock
+                      PlacedTetromino = gameboard.MovingTetromino
+                      Rows = gameboard.Rows
+                      BlockSize = gameboard.BlockSize
+                    }
+                    |> CheckForCompletedRowsAndReleaseAnotherBlock
+            else 
+                //can move horizontal and vertical
+                if (gameboard.MovingTetromino.BottomY + transitionDistance) = gameboard.Height then MoveAndRestOnBottom gameboard
+                elif    
+                    (gameboard.Rows 
+                    |> Map.tryFind (gameboard.MovingTetromino.BottomY + transitionDistance + gameboard.BlockSize) 
+                    |> Option.map (fun row -> tetrominoOverlapsWithExistingBlocks NoHorizontalTransition gameboard.BlockSize gameboard.MovingTetromino row) 
+                    |> function | Some b -> b | None -> false)  then
+                        MoveAndRestOnBlockBelow gameboard
+                else MoveHorizontallyAndVertically gameboard
                 
                     
-            if (gameboard.MovingTetromino.BottomY + transitionDistance) = gameboard.Height then MoveAndRestOnBottom gameboard
-            elif (otherRowsInRangeContainingBlocksInTheWay |> Seq.length > 0 && 
-                  otherRowsInRangeContainingBlocksInTheWay |> Seq.contains (gameboard.MovingTetromino.BottomY + gameboard.BlockSize)) then 
-                
-                RestOnBlockBelow gameboard
-            elif otherRowsInRangeContainingBlocksInTheWay |> Seq.length > 0 then
-                MoveVerticallyOnly gameboard
-            else MoveHorizontallyAndVertically gameboard
+//            if (gameboard.MovingTetromino.BottomY + transitionDistance) = gameboard.Height then MoveAndRestOnBottom gameboard
+//            elif (otherRowsInRangeContainingBlocksInTheWay direction |> Seq.length > 0 && 
+//                  otherRowsInRangeContainingBlocksInTheWay direction |> Seq.contains (gameboard.MovingTetromino.BottomY + transitionDistance + gameboard.BlockSize)) then 
+//                
+//                MoveAndRestOnBlockBelow gameboard
+//            elif otherRowsInRangeContainingBlocksInTheWay direction |> Seq.length > 0 
+////            &&
+////                 otherRowsInRangeContainingBlocksInTheWay NoHorizontalTransition |> Seq.length = 0 
+//                 then
+//                    MoveVerticallyOnly gameboard
+//            else MoveHorizontallyAndVertically gameboard
         | RestingGameboard gameboard -> CheckForCompletedRowsAndReleaseAnotherBlock gameboard
 
 module Block = 
@@ -131,8 +145,8 @@ module Gameboard =
                           MovingBlock = { gameboard.MovingBlock with BottomX = columnTo } }
                 | None -> gameboard
 
-    let moveTetrominoHorizontally horizontalTransitionDirection (tetromino:Tetromino) columnTo (gameboard : GameboardInMotion) =
-        match horizontalTransitionDirection with
+    let moveTetrominoHorizontally direction (tetromino:Tetromino) columnTo (gameboard : GameboardInMotion) =
+        match direction with
         | Right when tetromino.RightMostX gameboard.BlockSize = gameboard.Width -> gameboard
         | Right ->
             tetromino.Blocks.ToList 
@@ -171,11 +185,11 @@ module Gameboard =
             |> Map.add rowToY (Map.ofList [ block.BottomX, block ])
         | _, _ -> rows
         
-    let transition nextXPos nextYPos horizontalTransitionDirection (gameboard:Gameboard) = 
-        match decideTransition horizontalTransitionDirection gameboard with
+    let transition nextXPos nextYPos horizontalDirection (gameboard:Gameboard) = 
+        match decideTransition horizontalDirection gameboard with
         | MoveHorizontallyAndVertically gameboard ->
             gameboard 
-            |> moveTetrominoHorizontally horizontalTransitionDirection gameboard.MovingTetromino nextXPos
+            |> moveTetrominoHorizontally horizontalDirection gameboard.MovingTetromino nextXPos
             |> fun gameboard ->
                 { gameboard with                  
                     MovingBlock = { gameboard.MovingBlock with BottomY = nextYPos }
@@ -205,17 +219,25 @@ module Gameboard =
                             rows
                             |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
                                 { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }       
-                                                     
-        | RestOnBlockBelow gameboard ->
-            RestingGameboard 
-                { Height = gameboard.Height
-                  Width = gameboard.Width
-                  BlockSize = gameboard.BlockSize
-                  PlacedTetromino = gameboard.MovingTetromino
-                  PlacedBlock = gameboard.MovingBlock
-                  Rows = gameboard.Rows }
-                  
-        | MoveAndRestOnBottom gameboard -> 
+
+        | MoveVerticallyOnlyAndRestOnBlockBelow gameboard ->
+            RestingGameboard
+                {   Height = gameboard.Height                  
+                    Width = gameboard.Width
+                    PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPos }
+                    BlockSize = gameboard.BlockSize
+                    PlacedTetromino = 
+                        gameboard.MovingTetromino 
+                        |> Tetromino.updateBlocks (fun b ->
+                            { b with BottomY = b.BottomY + transitionDistance })
+                    Rows = 
+                        gameboard.MovingTetromino.Blocks.ToList
+                        |> List.fold (fun rows b -> 
+                            rows
+                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }    
+
+        | MoveVerticallyOnlyAndRestOnBottom gameboard ->
             RestingGameboard 
                 { Height = gameboard.Height
                   Width = gameboard.Width
@@ -231,6 +253,46 @@ module Gameboard =
                             rows
                             |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
                                 { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
+                                                     
+        | MoveAndRestOnBlockBelow gameboard ->
+            gameboard 
+            |> moveTetrominoHorizontally horizontalDirection gameboard.MovingTetromino nextXPos
+            |> fun gameboard ->
+                {   Height = gameboard.Height
+                    Width = gameboard.Width
+                    PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPos }
+                    BlockSize = gameboard.BlockSize
+                    PlacedTetromino = 
+                        gameboard.MovingTetromino 
+                        |> Tetromino.updateBlocks (fun b ->
+                            { b with BottomY = b.BottomY + transitionDistance })
+                    Rows = 
+                        gameboard.MovingTetromino.Blocks.ToList
+                        |> List.fold (fun rows b -> 
+                            rows
+                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
+            |> RestingGameboard
+                  
+        | MoveAndRestOnBottom gameboard -> 
+            gameboard
+            |> moveTetrominoHorizontally horizontalDirection gameboard.MovingTetromino nextXPos
+            |> fun gameboard ->
+                RestingGameboard 
+                    { Height = gameboard.Height
+                      Width = gameboard.Width
+                      BlockSize = gameboard.BlockSize
+                      PlacedBlock = { gameboard.MovingBlock with BottomY = nextYPos }
+                      PlacedTetromino =  
+                            gameboard.MovingTetromino 
+                            |> Tetromino.updateBlocks (fun b ->
+                                { b with BottomY = b.BottomY + transitionDistance })                  
+                      Rows = 
+                            gameboard.MovingTetromino.Blocks.ToList
+                            |> List.fold (fun rows b -> 
+                                rows
+                                |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                    { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
                              
         | CheckForCompletedRowsAndReleaseAnotherBlock gameboard ->
             let rowsWithCompletedOnesClearedAndOthersShifted (gameboard : RestingGameboard) = 
@@ -301,13 +363,13 @@ let transitionGameBoard (gameboard: Gameboard) =
 
         | RestingGameboard gameboard -> gameboard.PlacedBlock.BottomX
     
-    let horizontalTransitionDirection =
+    let horizontalDirection =
         match getKeyPressed() with
         | Some (ValidKeyPress(GameControl.Left, _)) -> HorizontalTransitionDirection.Left
         | Some (ValidKeyPress(GameControl.Right, _)) -> HorizontalTransitionDirection.Right
         | _ -> HorizontalTransitionDirection.NoHorizontalTransition 
 
-    Gameboard.transition nextXPos nextYPos horizontalTransitionDirection gameboard
+    Gameboard.transition nextXPos nextYPos horizontalDirection gameboard
                
                     
 let runApp() = 

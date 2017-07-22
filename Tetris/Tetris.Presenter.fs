@@ -10,9 +10,16 @@ let tetrisView = Browser.document.getElementById("tetris-view") :?> Browser.HTML
 let ctx = tetrisView.getContext_2d()
 
 let mutable lastRenderedGameBoard = GameboardInMotion {
-    Height = 125.
-    Width = 75.
+    Height = 400.
+    Width = 400.
     BlockSize = 25.
+    MovingTetromino = 
+        StraightTetromino(
+            { Block1 = { BottomX = 0.; BottomY = 0.; Color = "green" } 
+              Block2 = { BottomX = 25.; BottomY = 0.; Color = "red" } 
+              Block3 = { BottomX = 50.; BottomY = 0.; Color = "blue" } 
+              Block4 = { BottomX = 75.; BottomY = 0.; Color = "pink" } }, 
+            Horizontal)
     MovingBlock = { BottomX = 20.; BottomY = 0.; Color = "green" }
     Rows = Map.empty<RowBottomPosition,RowData>
     }

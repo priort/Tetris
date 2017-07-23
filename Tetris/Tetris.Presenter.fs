@@ -10,19 +10,17 @@ let tetrisView = Browser.document.getElementById("tetris-view") :?> Browser.HTML
 let ctx = tetrisView.getContext_2d()
 
 let mutable lastRenderedGameBoard = GameboardInMotion {
-    Height = 400.
-    Width = 400.
+    Height = 300.
+    Width = 300.
     BlockSize = 25.
     MovingTetromino = 
-        StraightTetromino(
-            { Block1 = { BottomX = 0.; BottomY = 0.; Color = "green" } 
-              Block2 = { BottomX = 25.; BottomY = 0.; Color = "red" } 
-              Block3 = { BottomX = 50.; BottomY = 0.; Color = "blue" } 
-              Block4 = { BottomX = 75.; BottomY = 0.; Color = "pink" } }, 
-            Horizontal)
-    MovingBlock = { BottomX = 20.; BottomY = 0.; Color = "green" }
-    Rows = Map.empty<RowBottomPosition,RowData>
-    }
+        { Row = 
+            { Blocks = 
+                [ { BottomX = 0.; BottomY = 0.; Color = "green" }
+                  { BottomX = 25.; BottomY = 0.; Color = "red" } 
+                  { BottomX = 50.; BottomY = 0.; Color = "blue" } 
+                  { BottomX = 75.; BottomY = 0.; Color = "pink" } ] } }
+    Rows = Map.empty<RowBottomPosition,RowData> }
 
 let render gameboard =
 
@@ -57,6 +55,6 @@ let startFrameClock() =
             | RestingGameboard _ -> frameChangeEvent.Trigger lastRenderedGameBoard
 //            Browser.window.clearInterval frameClockId
             ) 
-        , 300.)
+        , 200.)
 
 let stopFrameClock() = Browser.window.clearInterval frameClockId

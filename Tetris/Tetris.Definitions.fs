@@ -16,30 +16,31 @@ with
     member tbs.ToList = 
         [ tbs.Block1; tbs.Block2; tbs.Block3; tbs.Block4 ]
 
-type StraightTetrominoRotation = Vertical | Horizontal
+//type StraightTetrominoRotation = Vertical | Horizontal
 
-type Tetromino = StraightTetromino of TetrominoBlocks * StraightTetrominoRotation
+
+//type Tetromino = StraightTetromino of TetrominoBlocks * StraightTetrominoRotation
+type TetrominoRow = { Blocks : Block list }
 with
-    member t.Blocks = 
-        match t with
-        | StraightTetromino(blocks, _) -> blocks
+//    member t.Blocks = 
+//        match t with
+//        | StraightTetromino(blocks, _) -> blocks
     member t.LeftMostX =
-        t.Blocks.ToList |> List.map (fun b -> b.BottomX) |> List.min
+        t.Blocks |> List.map (fun b -> b.BottomX) |> List.min
     member t.RightMostX blockSize = 
-        t.Blocks.ToList |> List.map (fun b -> (b.BottomX + blockSize)) |> List.max
+        t.Blocks |> List.map (fun b -> (b.BottomX + blockSize)) |> List.max
     member t.Width blockSize = 
         (t.RightMostX blockSize) - t.LeftMostX
     member t.TopY blockSize = 
-        t.Blocks.ToList |> List.map (fun b -> (b.BottomY - blockSize)) |> List.min
+        t.Blocks |> List.map (fun b -> (b.BottomY - blockSize)) |> List.min
     member t.BottomY = 
-        t.Blocks.ToList |> List.map (fun b -> b.BottomY) |> List.max
+        t.Blocks |> List.map (fun b -> b.BottomY) |> List.max
     member t.Height blockSize = 
         t.BottomY - (t.TopY blockSize)
     member t.LowestBlocks blockSize = 
-        t.Blocks.ToList |> List.filter (fun b -> b.BottomY = t.BottomY )
-        
-    
- 
+        t.Blocks |> List.filter (fun b -> b.BottomY = t.BottomY )
+
+type Tetromino = {Row : TetrominoRow}
 
 type LeftBlockPosition = float
 
@@ -55,7 +56,6 @@ type GameboardInMotion = {
     Width : float
     BlockSize : float
     MovingTetromino : Tetromino
-    MovingBlock : Block
     Rows : Map<RowBottomPosition, RowData>
 }
 
@@ -64,7 +64,6 @@ type RestingGameboard = {
     Width : float
     BlockSize : float
     PlacedTetromino : Tetromino
-    PlacedBlock : Block
     Rows : Map<RowBottomPosition, RowData>
 }
 

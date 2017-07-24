@@ -86,14 +86,42 @@ module Block =
         match colors |> List.tryFindIndex (fun c -> c = color) with
         | Some i -> colors.[(i + 1) % colors.Length]
         | None -> colors.[0]
-
+        
 module Tetromino = 
     let updateBlocks (f:Block -> Block) (tetromino:Tetromino) =
-        { TetrominoRows = 
-            tetromino.TetrominoRows 
-            |> List.map (fun row -> 
-                { TetrominoRow.Blocks = row.Blocks |> List.map f }) }
-        |> StraightHorizontal
+        match tetromino with
+        | StraightHorizontal tetrominoDetail -> 
+            { TetrominoRows = 
+                tetromino.TetrominoRows 
+                |> List.map (fun row -> 
+                    { TetrominoRow.Blocks = row.Blocks |> List.map f }) }
+            |> StraightHorizontal
+        | TShapeUp tetrominoDetail ->
+            { TetrominoRows = 
+                tetromino.TetrominoRows 
+                |> List.map (fun row -> 
+                    { TetrominoRow.Blocks = row.Blocks |> List.map f }) }
+            |> TShapeUp
+    
+    let nextTetromino tetromino = 
+        match tetromino with 
+        | StraightHorizontal tetrominoDetail -> 
+            TShapeUp 
+                { TetrominoRows = 
+                   [ { Blocks = 
+                       [ { BottomX = 25.; BottomY = 25.; Color = "red" } 
+                         { BottomX = 50.; BottomY = 25.; Color = "blue" } 
+                         { BottomX = 75.; BottomY = 25.; Color = "pink" } ] }
+                     { Blocks = 
+                        [ { BottomX = 50.; BottomY = 0.; Color = "green" } ] }] }
+        | TShapeUp tetrominoDetail ->
+            StraightHorizontal
+                { TetrominoRows = 
+                    [ { Blocks = 
+                        [ { BottomX = 0.; BottomY = 0.; Color = "green" }
+                          { BottomX = 25.; BottomY = 0.; Color = "red" } 
+                          { BottomX = 50.; BottomY = 0.; Color = "blue" } 
+                          { BottomX = 75.; BottomY = 0.; Color = "pink" } ] } ] }
 
 
 module Gameboard = 
@@ -114,7 +142,6 @@ module Gameboard =
 
     let moveTetrominoHorizontally direction (tetromino:Tetromino) (gameboard : GameboardInMotion) =
         match direction with
-//        | Right when tetromino.TetrominoRows.[0].RightMostX gameboard.BlockSize = gameboard.Width -> gameboard
         | Right ->
             tetromino.TetrominoRows.[0].Blocks
             |> List.sortByDescending (fun b -> b.BottomX)
@@ -123,7 +150,6 @@ module Gameboard =
                 { gameboard with 
                     MovingTetromino = 
                         gameboard.MovingTetromino |> Tetromino.updateBlocks (fun b -> { b with BottomX = b.BottomX + transitionDistance }) }
-//        | Left when tetromino.TetrominoRows.[0].LeftMostX = 0. -> gameboard
         | Left ->
             tetromino.TetrominoRows.[0].Blocks
             |> List.sortBy (fun b -> b.BottomX)
@@ -162,11 +188,14 @@ module Gameboard =
                         |> Tetromino.updateBlocks (fun b ->
                             { b with BottomY = b.BottomY + transitionDistance })
                     Rows = 
-                        gameboard.MovingTetromino.TetrominoRows.[0].Blocks
-                        |> List.fold (fun rows b -> 
-                            rows
-                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
-                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
+                        gameboard.MovingTetromino.TetrominoRows
+                        |> List.fold (fun gameboardRows tetrominoRow -> 
+                                tetrominoRow.Blocks 
+                                |> List.fold (fun rows b -> 
+                                    rows
+                                    |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                        { b with BottomY = (b.BottomY + transitionDistance) }) gameboardRows
+                            ) gameboard.Rows }
             |> GameboardInMotion
             
         | MoveVerticallyOnly gameboard ->
@@ -177,11 +206,14 @@ module Gameboard =
                         |> Tetromino.updateBlocks (fun b ->
                             { b with BottomY = b.BottomY + transitionDistance })
                     Rows = 
-                        gameboard.MovingTetromino.TetrominoRows.[0].Blocks
-                        |> List.fold (fun rows b -> 
-                            rows
-                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
-                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }       
+                        gameboard.MovingTetromino.TetrominoRows
+                        |> List.fold (fun gameboardRows tetrominoRow -> 
+                                tetrominoRow.Blocks 
+                                |> List.fold (fun rows b -> 
+                                    rows
+                                    |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                        { b with BottomY = (b.BottomY + transitionDistance) }) gameboardRows
+                            ) gameboard.Rows }    
 
         | MoveVerticallyOnlyAndRestOnBlockBelow gameboard ->
             RestingGameboard
@@ -193,11 +225,14 @@ module Gameboard =
                         |> Tetromino.updateBlocks (fun b ->
                             { b with BottomY = b.BottomY + transitionDistance })
                     Rows = 
-                        gameboard.MovingTetromino.TetrominoRows.[0].Blocks
-                        |> List.fold (fun rows b -> 
-                            rows
-                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
-                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }    
+                        gameboard.MovingTetromino.TetrominoRows
+                        |> List.fold (fun gameboardRows tetrominoRow -> 
+                                tetrominoRow.Blocks 
+                                |> List.fold (fun rows b -> 
+                                    rows
+                                    |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                        { b with BottomY = (b.BottomY + transitionDistance) }) gameboardRows
+                            ) gameboard.Rows }
 
         | MoveVerticallyOnlyAndRestOnBottom gameboard ->
             RestingGameboard 
@@ -209,11 +244,14 @@ module Gameboard =
                         |> Tetromino.updateBlocks (fun b ->
                             { b with BottomY = b.BottomY + transitionDistance })                  
                   Rows = 
-                        gameboard.MovingTetromino.TetrominoRows.[0].Blocks
-                        |> List.fold (fun rows b -> 
-                            rows
-                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
-                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
+                  gameboard.MovingTetromino.TetrominoRows
+                  |> List.fold (fun gameboardRows tetrominoRow -> 
+                          tetrominoRow.Blocks 
+                          |> List.fold (fun rows b -> 
+                              rows
+                              |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                  { b with BottomY = (b.BottomY + transitionDistance) }) gameboardRows
+                      ) gameboard.Rows }
                                                      
         | MoveAndRestOnBlockBelow gameboard ->
             gameboard 
@@ -227,11 +265,14 @@ module Gameboard =
                         |> Tetromino.updateBlocks (fun b ->
                             { b with BottomY = b.BottomY + transitionDistance })
                     Rows = 
-                        gameboard.MovingTetromino.TetrominoRows.[0].Blocks
-                        |> List.fold (fun rows b -> 
-                            rows
-                            |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
-                                { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
+                        gameboard.MovingTetromino.TetrominoRows
+                        |> List.fold (fun gameboardRows tetrominoRow -> 
+                                tetrominoRow.Blocks 
+                                |> List.fold (fun rows b -> 
+                                    rows
+                                    |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                        { b with BottomY = (b.BottomY + transitionDistance) }) gameboardRows
+                            ) gameboard.Rows }
             |> RestingGameboard
                   
         | MoveAndRestOnBottom gameboard -> 
@@ -247,11 +288,14 @@ module Gameboard =
                             |> Tetromino.updateBlocks (fun b ->
                                 { b with BottomY = b.BottomY + transitionDistance })                  
                       Rows = 
-                            gameboard.MovingTetromino.TetrominoRows.[0].Blocks
-                            |> List.fold (fun rows b -> 
-                                rows
-                                |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
-                                    { b with BottomY = (b.BottomY + transitionDistance) }) gameboard.Rows }
+                          gameboard.MovingTetromino.TetrominoRows
+                          |> List.fold (fun gameboardRows tetrominoRow -> 
+                                  tetrominoRow.Blocks 
+                                  |> List.fold (fun rows b -> 
+                                      rows
+                                      |> moveBlockFromRowToRow b.BottomY (b.BottomY + transitionDistance) 
+                                          { b with BottomY = (b.BottomY + transitionDistance) }) gameboardRows
+                              ) gameboard.Rows }
                              
         | CheckForCompletedRowsAndReleaseAnotherBlock gameboard ->
             let rowsWithCompletedOnesClearedAndOthersShifted (gameboard : RestingGameboard) = 
@@ -288,13 +332,13 @@ module Gameboard =
                 { Height = gameboard.Height
                   Width = gameboard.Width
                   BlockSize = gameboard.BlockSize
-                  MovingTetromino = 
-                    { TetrominoRows = 
-                         [ { Blocks = 
-                              [ { BottomX = 0.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[0].Color) } 
-                                { BottomX = 25.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[1].Color) } 
-                                { BottomX = 50.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[2].Color) } 
-                                { BottomX = 75.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[3].Color) } ] } ] } |> StraightHorizontal
+                  MovingTetromino = Tetromino.nextTetromino gameboard.PlacedTetromino
+//                    { TetrominoRows = 
+//                         [ { Blocks = 
+//                              [ { BottomX = 0.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[0].Color) } 
+//                                { BottomX = 25.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[1].Color) } 
+//                                { BottomX = 50.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[2].Color) } 
+//                                { BottomX = 75.; BottomY = 0.; Color = (Block.nextColor gameboard.PlacedTetromino.TetrominoRows.[0].Blocks.[3].Color) } ] } ] } |> StraightHorizontal
                   Rows = rowsWithCompletedOnesClearedAndOthersShifted gameboard }
     
 let transitionGameBoard (gameboard: Gameboard) =

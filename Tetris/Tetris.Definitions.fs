@@ -35,11 +35,14 @@ with
 
 type TetrominoDetail = { TetrominoRows : TetrominoRow list }
 
-type Tetromino = StraightHorizontal of TetrominoDetail
+type Tetromino = 
+| StraightHorizontal of TetrominoDetail
+| TShapeUp of TetrominoDetail    
 with 
     member t.TetrominoRows =
         match t with 
-        | StraightHorizontal tetrominoDetail -> tetrominoDetail.TetrominoRows 
+        | StraightHorizontal tetrominoDetail -> tetrominoDetail.TetrominoRows
+        | TShapeUp tetrominoDetail -> tetrominoDetail.TetrominoRows
     
 
 type LeftBlockPosition = float

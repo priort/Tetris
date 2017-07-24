@@ -128,29 +128,29 @@ module Tetromino =
             TShapeUp 
                 { TetrominoRows = 
                    [ { Blocks = 
-                       [ { BottomX = 25.; BottomY = 0.; Color = "red" } 
-                         { BottomX = 50.; BottomY = 0.; Color = "blue" } 
-                         { BottomX = 75.; BottomY = 0.; Color = "pink" } ] }
+                       [ { BottomX = 25.; BottomY = -5.; Color = "red" } 
+                         { BottomX = 50.; BottomY = -5.; Color = "blue" } 
+                         { BottomX = 75.; BottomY = -5.; Color = "pink" } ] }
                      { Blocks = 
-                        [ { BottomX = 50.; BottomY = -25.; Color = "green" } ] }] }
+                        [ { BottomX = 50.; BottomY = -30.; Color = "green" } ] }] }
         | TShapeUp tetrominoDetail ->
             TShapeDown 
                 { TetrominoRows = 
                    [ { Blocks = 
-                       [ { BottomX = 50.; BottomY = 0.; Color = "green" } ] }
+                       [ { BottomX = 50.; BottomY = -5.; Color = "green" } ] }
                      { Blocks = 
                         [ 
-                         { BottomX = 25.; BottomY = -25.; Color = "red" } 
-                         { BottomX = 50.; BottomY = -25.; Color = "blue" } 
-                         { BottomX = 75.; BottomY = -25.; Color = "pink" } ] }] }
+                         { BottomX = 25.; BottomY = -30.; Color = "red" } 
+                         { BottomX = 50.; BottomY = -30.; Color = "blue" } 
+                         { BottomX = 75.; BottomY = -30.; Color = "pink" } ] }] }
         | TShapeDown tetrominoDetail ->
             StraightHorizontal
                 { TetrominoRows = 
                     [ { Blocks = 
-                        [ { BottomX = 0.; BottomY = 0.; Color = "green" }
-                          { BottomX = 25.; BottomY = 0.; Color = "red" } 
-                          { BottomX = 50.; BottomY = 0.; Color = "blue" } 
-                          { BottomX = 75.; BottomY = 0.; Color = "pink" } ] } ] }
+                        [ { BottomX = 0.; BottomY = -5.; Color = "green" }
+                          { BottomX = 25.; BottomY = -5.; Color = "red" } 
+                          { BottomX = 50.; BottomY = -5.; Color = "blue" } 
+                          { BottomX = 75.; BottomY = -5.; Color = "pink" } ] } ] }
 
 
 module Gameboard = 

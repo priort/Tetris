@@ -16,10 +16,10 @@ let mutable lastRenderedGameBoard = GameboardInMotion {
     MovingTetromino = 
         { TetrominoRows = 
             [ { Blocks = 
-                [ { BottomX = 0.; BottomY = 0.; Color = "green" }
-                  { BottomX = 25.; BottomY = 0.; Color = "red" } 
-                  { BottomX = 50.; BottomY = 0.; Color = "blue" } 
-                  { BottomX = 75.; BottomY = 0.; Color = "pink" } ] } ] } |> StraightHorizontal
+                [ { BottomX = 0.; BottomY = -5.; Color = "green" }
+                  { BottomX = 25.; BottomY = -5.; Color = "red" } 
+                  { BottomX = 50.; BottomY = -5.; Color = "blue" } 
+                  { BottomX = 75.; BottomY = -5.; Color = "pink" } ] } ] } |> StraightHorizontal
     Rows = Map.empty<RowBottomPosition,RowData> }
 
 let render gameboard =

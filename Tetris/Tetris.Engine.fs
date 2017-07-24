@@ -384,9 +384,9 @@ let transitionGameBoard (gameboard: Gameboard) =
         
     let horizontalDirection =
         match getKeyPressed() with
-        | Some (ValidKeyPress(GameControl.Left, _)) when tetromino.TetrominoRows.[0].LeftMostX = 0. -> NoHorizontalTransition
+        | Some (ValidKeyPress(GameControl.Left, _)) when tetromino.TetrominoRows |> List.exists (fun r -> r.LeftMostX = 0.) -> NoHorizontalTransition
         | Some (ValidKeyPress(GameControl.Left, _)) -> HorizontalTransitionDirection.Left
-        | Some (ValidKeyPress(GameControl.Right, _)) when tetromino.TetrominoRows.[0].RightMostX blockSize  = gameboardWidth -> NoHorizontalTransition
+        | Some (ValidKeyPress(GameControl.Right, _)) when tetromino.TetrominoRows |> List.exists (fun r -> r.RightMostX blockSize  = gameboardWidth) -> NoHorizontalTransition
         | Some (ValidKeyPress(GameControl.Right, _)) -> HorizontalTransitionDirection.Right
         | _ -> HorizontalTransitionDirection.NoHorizontalTransition 
 

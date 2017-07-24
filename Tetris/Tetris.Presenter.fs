@@ -14,12 +14,12 @@ let mutable lastRenderedGameBoard = GameboardInMotion {
     Width = 300.
     BlockSize = 25.
     MovingTetromino = 
-        { Row = 
-            { Blocks = 
+        { TetrominoRows = 
+            [ { Blocks = 
                 [ { BottomX = 0.; BottomY = 0.; Color = "green" }
                   { BottomX = 25.; BottomY = 0.; Color = "red" } 
                   { BottomX = 50.; BottomY = 0.; Color = "blue" } 
-                  { BottomX = 75.; BottomY = 0.; Color = "pink" } ] } }
+                  { BottomX = 75.; BottomY = 0.; Color = "pink" } ] } ] } |> StraightHorizontal
     Rows = Map.empty<RowBottomPosition,RowData> }
 
 let render gameboard =
@@ -27,8 +27,7 @@ let render gameboard =
     let renderRow blockSize (blocks:Map<LeftBlockPosition,Block>) = 
         blocks |> Map.toSeq |> Seq.map snd |> Seq.iter (fun block -> 
             ctx.fillStyle <- U3.Case1 block.Color    
-            ctx.fillRect(block.BottomX, block.BottomY - blockSize, blockSize, blockSize)
-        )
+            ctx.fillRect(block.BottomX, block.BottomY - blockSize, blockSize, blockSize))
 
     let renderRows blockSize (rows:Map<RowBottomPosition,RowData>) = 
         rows |> Map.toSeq |> Seq.map snd |> Seq.iter (renderRow blockSize)
@@ -55,6 +54,6 @@ let startFrameClock() =
             | RestingGameboard _ -> frameChangeEvent.Trigger lastRenderedGameBoard
 //            Browser.window.clearInterval frameClockId
             ) 
-        , 200.)
+        , 100.)
 
 let stopFrameClock() = Browser.window.clearInterval frameClockId

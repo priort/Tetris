@@ -16,15 +16,8 @@ with
     member tbs.ToList = 
         [ tbs.Block1; tbs.Block2; tbs.Block3; tbs.Block4 ]
 
-//type StraightTetrominoRotation = Vertical | Horizontal
-
-
-//type Tetromino = StraightTetromino of TetrominoBlocks * StraightTetrominoRotation
 type TetrominoRow = { Blocks : Block list }
 with
-//    member t.Blocks = 
-//        match t with
-//        | StraightTetromino(blocks, _) -> blocks
     member t.LeftMostX =
         t.Blocks |> List.map (fun b -> b.BottomX) |> List.min
     member t.RightMostX blockSize = 
@@ -40,7 +33,14 @@ with
     member t.LowestBlocks blockSize = 
         t.Blocks |> List.filter (fun b -> b.BottomY = t.BottomY )
 
-type Tetromino = {Row : TetrominoRow}
+type TetrominoDetail = { TetrominoRows : TetrominoRow list }
+
+type Tetromino = StraightHorizontal of TetrominoDetail
+with 
+    member t.TetrominoRows =
+        match t with 
+        | StraightHorizontal tetrominoDetail -> tetrominoDetail.TetrominoRows 
+    
 
 type LeftBlockPosition = float
 

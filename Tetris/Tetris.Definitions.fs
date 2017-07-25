@@ -37,13 +37,17 @@ type TetrominoDetail = { TetrominoRows : TetrominoRow list }
 
 type Tetromino = 
 | StraightHorizontal of TetrominoDetail
+| StraightRight of TetrominoDetail
 | TShapeUp of TetrominoDetail
+| TShapeRight of TetrominoDetail
 | TShapeDown of TetrominoDetail
 with 
     member t.TetrominoRows =
-        match t with 
+        match t with
         | StraightHorizontal tetrominoDetail -> tetrominoDetail.TetrominoRows
+        | StraightRight tetrominoDetail -> tetrominoDetail.TetrominoRows
         | TShapeUp tetrominoDetail -> tetrominoDetail.TetrominoRows
+        | TShapeRight tetrominoDetail -> tetrominoDetail.TetrominoRows
         | TShapeDown tetrominoDetail -> tetrominoDetail.TetrominoRows
     
 

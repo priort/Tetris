@@ -10,8 +10,8 @@ let tetrisView = Browser.document.getElementById("tetris-view") :?> Browser.HTML
 let ctx = tetrisView.getContext_2d()
 
 let mutable lastRenderedGameBoard = GameboardInMotion {
-    Height = 300.
-    Width = 300.
+    Height = 350.
+    Width = 200.
     BlockSize = 25.
     MovingTetromino = 
         { TetrominoRows = 
@@ -52,8 +52,7 @@ let startFrameClock() =
             match lastRenderedGameBoard with 
             | GameboardInMotion _
             | RestingGameboard _ -> frameChangeEvent.Trigger lastRenderedGameBoard
-//            Browser.window.clearInterval frameClockId
             ) 
-        , 200.)
+        , 150.)
 
 let stopFrameClock() = Browser.window.clearInterval frameClockId

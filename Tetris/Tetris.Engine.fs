@@ -110,7 +110,11 @@ module Tetromino =
         | TShapeLeft tetrominoDetail -> TShapeLeft <| updateTetrominoDetail f tetromino.TetrominoRows tetrominoDetail
     
     let nextTetromino tetromino = 
-        let possibleStartTetrominos = [
+        match tetromino with
+        | StraightUp _
+        | StraightDown _
+        | StraightRight _
+        | StraightLeft _ ->
             TShapeUp 
                 { TetrominoRows = 
                    [ { Blocks = 
@@ -119,6 +123,10 @@ module Tetromino =
                          { BottomX = 75.; BottomY = -5.; Color = "blue" } ] }
                      { Blocks = 
                         [ { BottomX = 50.; BottomY = -30.; Color = "blue" } ] }] }
+        | TShapeUp _
+        | TShapeRight _
+        | TShapeLeft _
+        | TShapeDown _ ->
             StraightUp
                 { TetrominoRows = 
                     [ { Blocks = 
@@ -126,9 +134,6 @@ module Tetromino =
                           { BottomX = 25.; BottomY = -5.; Color = "green" } 
                           { BottomX = 50.; BottomY = -5.; Color = "green" } 
                           { BottomX = 75.; BottomY = -5.; Color = "green" } ] } ] }
-        ]
-        let randIndex = System.Random().Next(0,2)
-        possibleStartTetrominos.[randIndex]
 
 module Gameboard = 
 

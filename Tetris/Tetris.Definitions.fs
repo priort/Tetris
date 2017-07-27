@@ -43,6 +43,7 @@ type Tetromino =
 | TShapeUp of TetrominoDetail
 | TShapeRight of TetrominoDetail
 | TShapeDown of TetrominoDetail
+| TShapeLeft of TetrominoDetail
 with 
     member t.TetrominoRows =
         match t with
@@ -53,6 +54,7 @@ with
         | TShapeUp tetrominoDetail -> tetrominoDetail.TetrominoRows
         | TShapeRight tetrominoDetail -> tetrominoDetail.TetrominoRows
         | TShapeDown tetrominoDetail -> tetrominoDetail.TetrominoRows
+        | TShapeLeft tetrominoDetail -> tetrominoDetail.TetrominoRows
     
 
 type LeftBlockPosition = float

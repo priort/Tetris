@@ -54,6 +54,6 @@ let startFrameClock() =
             | RestingGameboard _ -> frameChangeEvent.Trigger lastRenderedGameBoard
 //            Browser.window.clearInterval frameClockId
             ) 
-        , 300.)
+        , 200.)
 
 let stopFrameClock() = Browser.window.clearInterval frameClockId

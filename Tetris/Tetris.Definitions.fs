@@ -90,7 +90,6 @@ type KeyCode = float
 
 type GameControl = 
     | Up
-    | Down
     | Left
     | Right
 
@@ -107,5 +106,4 @@ module ValidKeyPress =
         | 37. -> Some <| ValidKeyPress (Left, 37.)
         | 38. -> Some <| ValidKeyPress (Up, 38.)
         | 39. -> Some <| ValidKeyPress (Right, 39.)
-        | 40. -> Some <| ValidKeyPress (Down, 40.)
         | _ -> None

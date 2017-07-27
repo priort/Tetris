@@ -17,16 +17,16 @@ let mutable lastRenderedGameBoard = GameboardInMotion {
         { TetrominoRows = 
             [ { Blocks = 
                 [ { BottomX = 0.; BottomY = -5.; Color = "green" }
-                  { BottomX = 25.; BottomY = -5.; Color = "red" } 
-                  { BottomX = 50.; BottomY = -5.; Color = "blue" } 
-                  { BottomX = 75.; BottomY = -5.; Color = "pink" } ] } ] } |> StraightUp
+                  { BottomX = 25.; BottomY = -5.; Color = "green" } 
+                  { BottomX = 50.; BottomY = -5.; Color = "green" } 
+                  { BottomX = 75.; BottomY = -5.; Color = "green" } ] } ] } |> StraightUp
     Rows = Map.empty<RowBottomPosition,RowData> }
 
 let render gameboard =
 
     let renderRow blockSize (blocks:Map<LeftBlockPosition,Block>) = 
         blocks |> Map.toSeq |> Seq.map snd |> Seq.iter (fun block -> 
-            ctx.fillStyle <- U3.Case1 block.Color    
+            ctx.fillStyle <- U3.Case1 block.Color
             ctx.fillRect(block.BottomX, block.BottomY - blockSize, blockSize, blockSize))
 
     let renderRows blockSize (rows:Map<RowBottomPosition,RowData>) = 

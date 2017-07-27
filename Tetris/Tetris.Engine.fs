@@ -118,11 +118,11 @@ module Tetromino =
             TShapeUp 
                 { TetrominoRows = 
                    [ { Blocks = 
-                       [ { BottomX = 25.; BottomY = -5.; Color = "red" } 
+                       [ { BottomX = 25.; BottomY = -5.; Color = "blue" } 
                          { BottomX = 50.; BottomY = -5.; Color = "blue" } 
-                         { BottomX = 75.; BottomY = -5.; Color = "pink" } ] }
+                         { BottomX = 75.; BottomY = -5.; Color = "blue" } ] }
                      { Blocks = 
-                        [ { BottomX = 50.; BottomY = -30.; Color = "green" } ] }] }
+                        [ { BottomX = 50.; BottomY = -30.; Color = "blue" } ] }] }
         | TShapeUp tetrominoDetail
         | TShapeRight tetrominoDetail
         | TShapeDown tetrominoDetail
@@ -131,9 +131,9 @@ module Tetromino =
                 { TetrominoRows = 
                     [ { Blocks = 
                         [ { BottomX = 0.; BottomY = -5.; Color = "green" }
-                          { BottomX = 25.; BottomY = -5.; Color = "red" } 
-                          { BottomX = 50.; BottomY = -5.; Color = "blue" } 
-                          { BottomX = 75.; BottomY = -5.; Color = "pink" } ] } ] }
+                          { BottomX = 25.; BottomY = -5.; Color = "green" } 
+                          { BottomX = 50.; BottomY = -5.; Color = "green" } 
+                          { BottomX = 75.; BottomY = -5.; Color = "green" } ] } ] }
 
 module Gameboard = 
 
@@ -336,11 +336,11 @@ module Rotations =
                  { TetrominoRows = 
                     [ 
                       { Blocks = 
-                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "pink" } ] }
+                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "green" } ] }
                       { Blocks = 
-                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } ] }
+                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "green" } ] }
                       { Blocks = 
-                        [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (2. * gameboard.BlockSize); Color = "red" }  ] }
+                        [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (2. * gameboard.BlockSize); Color = "green" }  ] }
                       { Blocks = 
                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (3. * gameboard.BlockSize); Color = "green" }  ] } ] }
                         
@@ -360,9 +360,9 @@ module Rotations =
                  { TetrominoRows = 
                      [ { Blocks = 
                          [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "green" }
-                           { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "red" } 
-                           { BottomX = updatedTetrominoX + (2. * gameboard.BlockSize); BottomY = updatedTetrominoY; Color = "blue" } 
-                           { BottomX = updatedTetrominoX + (3. * gameboard.BlockSize); BottomY = updatedTetrominoY;  Color = "pink" } ] } ] }
+                           { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "green" } 
+                           { BottomX = updatedTetrominoX + (2. * gameboard.BlockSize); BottomY = updatedTetrominoY; Color = "green" } 
+                           { BottomX = updatedTetrominoX + (3. * gameboard.BlockSize); BottomY = updatedTetrominoY;  Color = "green" } ] } ] }
                            
         | StraightDown tetrominoDetail ->
             let rotatedLeftMostX = tetrominoDetail.TetrominoRows.[0].Blocks.[1].BottomX
@@ -381,11 +381,11 @@ module Rotations =
                  { TetrominoRows = 
                     [ 
                       { Blocks = 
-                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "pink" } ] }
+                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "green" } ] }
                       { Blocks = 
-                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } ] }
+                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "green" } ] }
                       { Blocks = 
-                        [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (2. * gameboard.BlockSize); Color = "red" }  ] }
+                        [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (2. * gameboard.BlockSize); Color = "green" }  ] }
                       { Blocks = 
                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (3. * gameboard.BlockSize); Color = "green" }  ] } ] }
                          
@@ -405,9 +405,9 @@ module Rotations =
                  { TetrominoRows = 
                      [ { Blocks = 
                          [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "green" }
-                           { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "red" } 
-                           { BottomX = updatedTetrominoX + (2. * gameboard.BlockSize); BottomY = updatedTetrominoY; Color = "blue" } 
-                           { BottomX = updatedTetrominoX + (3. * gameboard.BlockSize); BottomY = updatedTetrominoY;  Color = "pink" } ] } ] }
+                           { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "green" } 
+                           { BottomX = updatedTetrominoX + (2. * gameboard.BlockSize); BottomY = updatedTetrominoY; Color = "green" } 
+                           { BottomX = updatedTetrominoX + (3. * gameboard.BlockSize); BottomY = updatedTetrominoY;  Color = "green" } ] } ] }
                            
         | TShapeUp tetrominoDetail ->
             let rotatedLeftMostX = tetrominoDetail.TetrominoRows.[0].Blocks.[0].BottomX + gameboard.BlockSize
@@ -424,15 +424,15 @@ module Rotations =
                 { TetrominoRows = 
                    [ 
                      { Blocks = 
-                        [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "green" } ] 
+                        [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "blue" } ] 
                         }
                      { Blocks = 
                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } 
-                          { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "pink" }
+                          { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" }
                         ] 
                         }
                      { Blocks = 
-                       [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (gameboard.BlockSize * 2.); Color = "green" }  
+                       [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - (gameboard.BlockSize * 2.); Color = "blue" }  
                          ] }
                         ] }
                         
@@ -450,12 +450,12 @@ module Rotations =
             TShapeDown 
                 { TetrominoRows = 
                    [ { Blocks = 
-                       [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "green" } ] }
+                       [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "blue" } ] }
                      { Blocks = 
                         [ 
-                         { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "red" } 
+                         { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } 
                          { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } 
-                         { BottomX = updatedTetrominoX + (gameboard.BlockSize * 2.); BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "pink" } ] }] }
+                         { BottomX = updatedTetrominoX + (gameboard.BlockSize * 2.); BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } ] }] }
         | TShapeDown tetrominoDetail ->
             let rotatedLeftMostX = tetrominoDetail.TetrominoRows.[1].Blocks.[0].BottomX
             let rotatedBottomY = tetrominoDetail.TetrominoRows.[0].BottomY
@@ -472,15 +472,15 @@ module Rotations =
                 { TetrominoRows = 
                    [ 
                      { Blocks = 
-                        [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "green" } ] 
+                        [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "blue" } ] 
                         }
                      { Blocks = 
                         [ { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } 
-                          { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "pink" }
+                          { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" }
                         ] 
                         }
                      { Blocks = 
-                       [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - (gameboard.BlockSize * 2.); Color = "green" }  
+                       [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - (gameboard.BlockSize * 2.); Color = "blue" }  
                          ] }
                         ] }
                         
@@ -500,12 +500,12 @@ module Rotations =
                    [ 
                      { Blocks = 
                         [ 
-                         { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "red" } 
+                         { BottomX = updatedTetrominoX; BottomY = updatedTetrominoY; Color = "blue" } 
                          { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY; Color = "blue" } 
-                         { BottomX = updatedTetrominoX + (gameboard.BlockSize * 2.); BottomY = updatedTetrominoY; Color = "pink" } ] }
+                         { BottomX = updatedTetrominoX + (gameboard.BlockSize * 2.); BottomY = updatedTetrominoY; Color = "blue" } ] }
                          
                      { Blocks = 
-                        [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "green" } ] }
+                        [ { BottomX = updatedTetrominoX + gameboard.BlockSize; BottomY = updatedTetrominoY - gameboard.BlockSize; Color = "blue" } ] }
                      
                      ] }
     let rowsWithTetrominoRemoved tetromino gameboardRows = 
